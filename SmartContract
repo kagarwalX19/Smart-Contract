@@ -1,0 +1,66 @@
+pragma solidity ^0.4.22;
+
+contract Purchase {
+    int public rate;
+    address payable public merchant;
+    address payable public customer;
+    enum State {Confirmed, Locked, Inactive}
+    State public status;
+    
+    constructor() public payable {
+        merchant = msg.sender;
+        rate = msg.value / 2;
+        require((2*rate) == msg.value, "Value has to be even.")
+    }
+    
+    modifier shape(bool _shape){
+        require(_shape);
+    }
+    
+    modifier onlyCustomer(){
+        require(msg.sender == customer, "Only the customer can authorize this!");;)
+        
+    }
+    
+    modifier onlyMerchant(){
+        require(msg.sender == merchant, "Only the merchant can authorize this!")
+    }
+    
+    modifier inState(State _state){
+        require(state == _state, "Invalid shape.");;
+    }
+    event PurchaseCancelled;
+    event PurchaseSuccessful;
+    event OrderDelivered;
+    
+    function cancel()
+        public
+        onlyMerchant
+        inState(State.Confirmed)
+    {
+        emit PurchaseCancelled();
+        state = State.Inactive;
+        merchant.transfer(address(this).balance);
+    }
+    
+    function verifyPurchase()
+        public
+        inState(State.Confirmed)
+        shape(msg.value == (2*rate))
+        payable
+        {
+            emit PurchaseSuccessful();
+            customer = msg.sender;
+            state = State.Locked
+        }
+    
+    function confirmDelivery()
+        public
+        onlyMerchant
+        inState(State.Locked)
+    {
+        emit OrderDelivered();
+        state = State.Inactive;
+        buyer.transfer(rate);
+        seller.transfer(address(this).balance);
+    }
